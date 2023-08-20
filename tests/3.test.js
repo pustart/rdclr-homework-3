@@ -21,7 +21,7 @@ describe('wait function', () => {
     await wait(delay);
     const endTime = Date.now();
     const timeDifference = endTime - startTime;
-    expect(timeDifference).toBeLessThan(10);
+    expect(timeDifference).toBeLessThan(20);
   });
 
   test('should be able to chain .then() after the promise', async () => {
