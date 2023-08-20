@@ -1,4 +1,4 @@
-// Данные код не трогать
+// Данный код не трогать
 // ----------------------------------------
 const URLS = {
     navigation: 'navigation',
@@ -8,8 +8,7 @@ const URLS = {
     favoriteGoods: 'favoriteGoods',
 }
 
-
-// функция используется как имитатор запросов
+// Функция используется как имитатор запросов
 function request(url, cb) {
     setTimeout(() => {
         switch (url) {
@@ -49,41 +48,59 @@ function request(url, cb) {
 
 // ----------------------------------------
 
-
 function getPageInformation() {
-    const pageInfo = {};
+  const pageInfo = {};
 
-    request(URLS.navigation, function (navigation) {
-        if (navigation) {
-            pageInfo.navigation = navigation;
-        }
+  requestPromise(URLS.navigation)
+    .then(navigation => {
+      if (navigation) {
+        pageInfo.navigation = navigation;
+      }
+      return requestPromise(URLS.user);
     })
+    .then(user => {
+      if (user) {
+        pageInfo.user = user;
 
-    request(URLS.user, function (user) {
-        if (user) {
-            pageInfo.user = user;
-
-            request(URLS.cart, function (cart) {
-                if (cart) {
-                    pageInfo.user.cart = cart;
-
-                    request(URLS.checkAvailableCart, function (available) {
-                        if (available) {
-                            pageInfo.user.cart = pageInfo.user.cart.filter(({id}) => available.includes(id))
-                        }
-                    })
-                }
-            })
-
-            request(URLS.favoriteGoods, function (favoriteGoods) {
-                if (favoriteGoods) {
-                    pageInfo.user.favoriteGoods = favoriteGoods;
-                }
-            })
-        }
+        return requestPromise(URLS.cart);
+      }
     })
+    .then(cart => {
+      if (cart) {
+        pageInfo.user.cart = cart;
+
+        return requestPromise(URLS.checkAvailableCart);
+      }
+    })
+    .then(available => {
+      if (available) {
+        pageInfo.user.cart = pageInfo.user.cart.filter(({ id }) => available.includes(id));
+      }
+      return requestPromise(URLS.favoriteGoods);
+    })
+    .then(favoriteGoods => {
+      if (favoriteGoods) {
+        pageInfo.user.favoriteGoods = favoriteGoods;
+      }
+    })
+    .catch(error => {
+      console.error("Error fetching page information:", error);
+      return pageInfo;
+    });
 
     return pageInfo;
+}
+
+function requestPromise(url) {
+  return new Promise((resolve, reject) => {
+    request(url, (data) => {
+      if (data) {
+        resolve(data);
+      } else {
+        reject(new Error(`Request failed for URL: ${url}`));
+      }
+    });
+  });
 }
 
 // должно вывести актуальную информацию страницы
